@@ -4,7 +4,7 @@
 
 #include "dispatcher.h"
 
-#define Max 520
+#define MAX 520
 struct EpollData {
     int epfd;
     struct epoll_event* events;
@@ -27,7 +27,7 @@ static void* epoll_init() {
         perror("epoll_create");
         exit(0);
     }
-    data->events = (struct epoll_event*)calloc(Max, sizeof(struct epoll_event));
+    data->events = (struct epoll_event*)calloc(MAX, sizeof(struct epoll_event));
 
     return data;
 }
@@ -76,6 +76,26 @@ static int epoll_modify(struct Channel* channel, struct EventLoop* evloop) {
     return ret;
 }
 
-static int epoll_dispatch(struct EventLoop* evloop, int timeout) {}
+static int epoll_dispatch(struct EventLoop* evloop, int timeout) {
+    struct EpollData* data = (struct EpollData*)evloop->dispatcher_data;
+    int count = epoll_wait(data->epfd, data->events, MAX, timeout * 1000);
+    for (int i = 0; i < count; ++i) {
+        int events = data->events[i].events;
+        int fd = data->events[i].data.fd;
+        if (events & EPOLLERR || events & EPOLLHUP) {
+            // epoll_remove(channel, evloop);
+            continue;
+        }
+        if (events & EPOLLIN) {}
+        if (events & EPOLLOUT) {}
+    }
 
-static int epoll_clear(struct EventLoop* evloop) {}
+    return 0;
+}
+
+static int epoll_clear(struct EventLoop* evloop) {
+    struct EpollData* data = (struct EpollData*)evloop->dispatcher_data;
+    free(data->events);
+    close(data->epfd);
+    free(data);
+}
