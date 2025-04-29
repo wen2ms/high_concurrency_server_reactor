@@ -2,7 +2,8 @@
 
 #include "dispatcher.h"
 
+extern struct Dispatcher epoll_dispatcher;
 struct EventLoop {
-    Dispatcher* dispatcher;
+    struct Dispatcher* dispatcher;
     void* dispatcher_data;
 };
