@@ -119,3 +119,20 @@ int event_loop_process_task(struct EventLoop* ev_loop) {
     pthread_mutex_unlock(&ev_loop->mutex);
     return 0;
 }
+
+int event_loop_add(struct EventLoop* ev_loop, struct Channel* channel) {
+    int fd = channel->fd;
+    struct ChannelMap* channel_map = ev_loop->channel_map;
+    if (fd >= channel_map->size) {
+        if (!make_map_room(channel_map, fd, sizeof(struct Channel*))) {
+            return -1;
+        }
+    }
+
+    if (channel_map->list[fd] == NULL) {
+        channel_map->list[fd] = channel;
+        ev_loop->dispatcher->add(channel, ev_loop);
+    }
+
+    return 0;
+}
