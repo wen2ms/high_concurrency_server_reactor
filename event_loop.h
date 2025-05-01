@@ -33,6 +33,7 @@ struct EventLoop {
     pthread_t thread_id;
     char thread_name[32];
     pthread_mutex_t mutex;
+    int socket_pair[2];
 };
 
 struct EventLoop* event_loop_init();

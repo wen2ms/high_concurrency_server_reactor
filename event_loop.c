@@ -1,12 +1,28 @@
 #include "event_loop.h"
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 struct EventLoop* event_loop_init() {
     return event_loop_init_ex(NULL);
 }
+
+void task_wakeup(struct EventLoop* ev_loop) {
+    const char msg = "Wake Up!!!";
+    write(ev_loop->socket_pair[0], msg, strlen(msg));
+}
+
+int read_local_message(void* arg) {
+    struct EventLoop* ev_loop = (struct EventLoop*)arg;
+    char buf[256];
+    read(ev_loop->socket_pair[1], buf, sizeof(buf));
+    return 0;
+}
+
 
 struct EventLoop* event_loop_init_ex(const char* thread_name) {
     struct EventLoop* ev_loop = (struct EventLoop*)malloc(sizeof(struct EventLoop));
@@ -18,6 +34,13 @@ struct EventLoop* event_loop_init_ex(const char* thread_name) {
     ev_loop->dispatcher_data = ev_loop->dispatcher->init();
     ev_loop->head = ev_loop->tail = NULL;
     ev_loop->channel_map = channel_map_init(128);
+    int ret = socketpair(AF_UNIX, SOCK_STREAM, 0, ev_loop->socket_pair);
+    if (ret == -1) {
+        perror("socketpair");
+        exit(0);
+    }
+    struct Channel* channel = channel_init(ev_loop->socket_pair[1], kReadEvent, read_local_message, NULL, ev_loop);
+    event_loop_add_task(ev_loop, channel, kAdd);
 
     return ev_loop;
 }
@@ -69,6 +92,7 @@ int event_loop_add_task(struct EventLoop* ev_loop, struct Channel* channel, int 
 
     if (ev_loop->thread_id == pthread_self()) {
     } else {
+        task_wakeup(ev_loop);
     }
 
     return 0;
