@@ -23,7 +23,6 @@ int read_local_message(void* arg) {
     return 0;
 }
 
-
 struct EventLoop* event_loop_init_ex(const char* thread_name) {
     struct EventLoop* ev_loop = (struct EventLoop*)malloc(sizeof(struct EventLoop));
     ev_loop->is_quit = false;
@@ -54,6 +53,7 @@ int event_loop_run(struct EventLoop* ev_loop) {
 
     while (!ev_loop->is_quit) {
         dispatcher->dispatch(ev_loop, 2);
+        event_loop_process_task(ev_loop);
     }
 
     return 0;
@@ -91,9 +91,31 @@ int event_loop_add_task(struct EventLoop* ev_loop, struct Channel* channel, int 
     pthread_mutex_unlock(&ev_loop->mutex);
 
     if (ev_loop->thread_id == pthread_self()) {
+        event_loop_process_task(ev_loop);
     } else {
         task_wakeup(ev_loop);
     }
 
+    return 0;
+}
+
+int event_loop_process_task(struct EventLoop* ev_loop) {
+    pthread_mutex_lock(&ev_loop->mutex);
+    struct ChannelElement* head = ev_loop->head;
+    while (head != NULL) {
+        struct Channel* channel = head->channel;
+        if (head->type == kAdd) {
+
+        } else if (head->type == kDelete) {
+
+        } else if (head->type == kModify) {
+
+        }
+        struct ChannelElement* tmp = head;
+        head = head->next;
+        free(tmp);
+    }
+    ev_loop->head = ev_loop->tail = NULL;
+    pthread_mutex_unlock(&ev_loop->mutex);
     return 0;
 }
