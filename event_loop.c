@@ -35,3 +35,20 @@ int event_loop_run(struct EventLoop* ev_loop) {
 
     return 0;
 }
+
+int event_activate(struct EventLoop* ev_loop, int fd, int event) {
+    if (fd < 0 || ev_loop == NULL) {
+        return -1;
+    }
+
+    struct Channel* channel = ev_loop->channel_map->list[fd];
+    assert(channel->fd == fd);
+    if (event & kReadEvent && channel->read_callback) {
+        channel->read_callback(channel->arg);
+    }
+    if (event & kWriteEvent && channel->write_callback) {
+        channel->write_callback(channel->arg);
+    }
+
+    return 0;
+}

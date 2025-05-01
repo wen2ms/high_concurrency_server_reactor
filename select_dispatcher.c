@@ -11,11 +11,11 @@ struct SelectData {
 };
 
 static void* select_init();
-static int select_add(struct Channel* channel, struct EventLoop* evloop);
-static int select_remove(struct Channel* channel, struct EventLoop* evloop);
-static int select_modify(struct Channel* channel, struct EventLoop* evloop);
-static int select_dispatch(struct EventLoop* evloop, int timeout);
-static int select_clear(struct EventLoop* evloop);
+static int select_add(struct Channel* channel, struct EventLoop* ev_loop);
+static int select_remove(struct Channel* channel, struct EventLoop* ev_loop);
+static int select_modify(struct Channel* channel, struct EventLoop* ev_loop);
+static int select_dispatch(struct EventLoop* ev_loop, int timeout);
+static int select_clear(struct EventLoop* ev_loop);
 static void set_fd_set(struct Channel* channel, struct SelectData* data);
 static void clear_fd_set(struct Channel* channel, struct SelectData* data);
 
@@ -48,8 +48,8 @@ static void clear_fd_set(struct Channel* channel, struct SelectData* data) {
     }
 }
 
-static int select_add(struct Channel* channel, struct EventLoop* evloop) {
-    struct SelectData* data = (struct SelectData*)evloop->dispatcher_data;
+static int select_add(struct Channel* channel, struct EventLoop* ev_loop) {
+    struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
     if (channel >= MAX) {
         return -1;
     }
@@ -58,23 +58,23 @@ static int select_add(struct Channel* channel, struct EventLoop* evloop) {
     return 0;
 }
 
-static int select_remove(struct Channel* channel, struct EventLoop* evloop) {
-    struct SelectData* data = (struct SelectData*)evloop->dispatcher_data;
+static int select_remove(struct Channel* channel, struct EventLoop* ev_loop) {
+    struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
     clear_fd_set(channel, data);
 
     return 0;
 }
 
-static int select_modify(struct Channel* channel, struct EventLoop* evloop) {
-    struct SelectData* data = (struct SelectData*)evloop->dispatcher_data;
+static int select_modify(struct Channel* channel, struct EventLoop* ev_loop) {
+    struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
     set_fd_set(channel, data);
     clear_fd_set(channel, data);
 
     return 0;
 }
 
-static int select_dispatch(struct EventLoop* evloop, int timeout) {
-    struct SelectData* data = (struct SelectData*)evloop->dispatcher_data;
+static int select_dispatch(struct EventLoop* ev_loop, int timeout) {
+    struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
     struct timeval val;
     val.tv_sec = timeout;
     val.tv_usec = 0;
@@ -86,14 +86,19 @@ static int select_dispatch(struct EventLoop* evloop, int timeout) {
         exit(0);
     }
     for (int i = 0; i < MAX; ++i) {
-        if (FD_ISSET(i, &rdtmp)) {}
-        if (FD_ISSET(i, &wrtmp)) {}
+        if (FD_ISSET(i, &rdtmp)) {
+            event_activate(ev_loop, i, kReadEvent);
+        }
+        if (FD_ISSET(i, &wrtmp)) {
+            event_activate(ev_loop, i, kWriteEvent);
+
+        }
     }
 
     return 0;
 }
 
-static int select_clear(struct EventLoop* evloop) {
-    struct SelectData* data = (struct SelectData*)evloop->dispatcher_data;
+static int select_clear(struct EventLoop* ev_loop) {
+    struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
     free(data);
 }
