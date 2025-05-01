@@ -37,3 +37,4 @@ struct EventLoop {
 
 struct EventLoop* event_loop_init();
 struct EventLoop* event_loop_init_ex(const char* thread_name);
+int event_loop_run(struct EventLoop* ev_loop);

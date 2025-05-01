@@ -1,5 +1,6 @@
 #include "event_loop.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,4 +20,18 @@ struct EventLoop* event_loop_init_ex(const char* thread_name) {
     ev_loop->channel_map = channel_map_init(128);
 
     return ev_loop;
+}
+
+int event_loop_run(struct EventLoop* ev_loop) {
+    assert(ev_loop != NULL);
+    struct Dispatcher* dispatcher = ev_loop->dispatcher;
+    if (ev_loop->thread_id != pthread_self()) {
+        return -1;
+    }
+
+    while (!ev_loop->is_quit) {
+        dispatcher->dispatch(ev_loop, 2);
+    }
+
+    return 0;
 }
