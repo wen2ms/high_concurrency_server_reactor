@@ -39,3 +39,4 @@ struct EventLoop* event_loop_init();
 struct EventLoop* event_loop_init_ex(const char* thread_name);
 int event_loop_run(struct EventLoop* ev_loop);
 int event_activate(struct EventLoop* ev_loop, int fd, int event);
+int event_loop_add_task(struct EventLoop* ev_loop, struct Channel* channel, int type);

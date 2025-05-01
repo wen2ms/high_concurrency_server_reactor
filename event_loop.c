@@ -52,3 +52,24 @@ int event_activate(struct EventLoop* ev_loop, int fd, int event) {
 
     return 0;
 }
+
+int event_loop_add_task(struct EventLoop* ev_loop, struct Channel* channel, int type) {
+    pthread_mutex_lock(&ev_loop->mutex);
+    struct ChannelElement* node = (struct ChannelElement*)malloc(sizeof(struct ChannelElement));
+    node->channel = channel;
+    node->type = type;
+    node->next = NULL;
+    if (ev_loop->head = NULL) {
+        ev_loop->head = ev_loop->tail = node;
+    } else {
+        ev_loop->tail->next = node;
+        ev_loop->tail = node;
+    }
+    pthread_mutex_unlock(&ev_loop->mutex);
+
+    if (ev_loop->thread_id == pthread_self()) {
+    } else {
+    }
+
+    return 0;
+}
