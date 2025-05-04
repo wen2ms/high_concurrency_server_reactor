@@ -105,11 +105,11 @@ int event_loop_process_task(struct EventLoop* ev_loop) {
     while (head != NULL) {
         struct Channel* channel = head->channel;
         if (head->type == kAdd) {
-
+            event_loop_add(ev_loop, channel);
         } else if (head->type == kDelete) {
-
+            event_loop_remove(ev_loop, channel);
         } else if (head->type == kModify) {
-
+            event_loop_modify(ev_loop, channel);
         }
         struct ChannelElement* tmp = head;
         head = head->next;
@@ -134,5 +134,32 @@ int event_loop_add(struct EventLoop* ev_loop, struct Channel* channel) {
         ev_loop->dispatcher->add(channel, ev_loop);
     }
 
+    return 0;
+}
+
+int event_loop_remove(struct EventLoop* ev_loop, struct Channel* channel) {
+    int fd = channel->fd;
+    struct ChannelMap* channel_map = ev_loop->channel_map;
+    if (fd >= channel_map->size || channel_map->list[fd] == NULL) {
+        return -1;
+    }
+    int ret = ev_loop->dispatcher->remove(channel, ev_loop);
+    return ret;
+}
+
+int event_loop_modify(struct EventLoop* ev_loop, struct Channel* channel) {
+    int fd = channel->fd;
+    struct ChannelMap* channel_map = ev_loop->channel_map;
+    if (fd >= channel_map->size || channel_map->list[fd] == NULL) {
+        return -1;
+    }
+    int ret = ev_loop->dispatcher->modify(channel, ev_loop);
+    return ret;
+}
+
+int destroy_channel(struct EventLoop* ev_loop, struct Channel* channel) {
+    ev_loop->channel_map->list[channel->fd] = NULL;
+    close(channel->fd);
+    free(channel);
     return 0;
 }

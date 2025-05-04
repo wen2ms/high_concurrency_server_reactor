@@ -43,3 +43,6 @@ int event_activate(struct EventLoop* ev_loop, int fd, int event);
 int event_loop_add_task(struct EventLoop* ev_loop, struct Channel* channel, int type);
 int event_loop_process_task(struct EventLoop* ev_loop);
 int event_loop_add(struct EventLoop* ev_loop, struct Channel* channel);
+int event_loop_remove(struct EventLoop* ev_loop, struct Channel* channel);
+int event_loop_modify(struct EventLoop* ev_loop, struct Channel* channel);
+int destroy_channel(struct EventLoop* ev_loop, struct Channel* channel);
