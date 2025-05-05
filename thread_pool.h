@@ -14,3 +14,5 @@ struct ThreadPool {
 };
 
 struct ThreadPool* thread_pool_init(struct EventLoop* main_loop, int count);
+void thread_pool_run(struct ThreadPool* pool);
+struct EventLoop* take_worker_event_loop(struct ThreadPool* pool);
