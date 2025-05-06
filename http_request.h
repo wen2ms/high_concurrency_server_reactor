@@ -22,3 +22,6 @@ struct HttpRequest {
 };
 
 struct HttpRequest* http_request_init();
+void http_request_reset(struct HttpRequest* req);
+void http_request_reset_ex(struct HttpRequest* req);
+void http_request_destroy(struct HttpRequest* req);
