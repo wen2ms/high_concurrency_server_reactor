@@ -25,3 +25,6 @@ struct HttpRequest* http_request_init();
 void http_request_reset(struct HttpRequest* req);
 void http_request_reset_ex(struct HttpRequest* req);
 void http_request_destroy(struct HttpRequest* req);
+enum HttpRequestState http_request_state(struct HttpRequest* request);
+void http_request_add_header(struct HttpRequest* request, const char* key, const char* value);
+char* http_request_get_header(struct HttpRequest* request, const char* key);
