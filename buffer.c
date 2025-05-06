@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <sys/uio.h>
 
 struct Buffer* buffer_init(int size) {
     struct Buffer* buffer = (struct Buffer*)malloc(sizeof(struct Buffer));
@@ -65,4 +66,25 @@ int buffer_append_string(struct Buffer* buffer, const char* data) {
     int size = strlen(data);
     int ret = buffer_append_data(buffer, data, size);
     return ret;
+}
+
+int buffer_socket_read(struct Buffer* buffer, int fd) {
+    struct iovec vec[2];
+    int writable = buffer_writable_size(buffer);
+    vec[0].iov_base = buffer->data + buffer->write_pos;
+    vec[0].iov_len = writable;
+    char tmpbuf = (char*)malloc(40960);
+    vec[1].iov_base = tmpbuf;
+    vec[1].iov_len = 40960;
+    int result = readv(fd, vec, 2);
+    if (result == -1) {
+        return -1;
+    } else if (result <= writable) {
+        buffer->write_pos += result;
+    } else {
+        buffer->write_pos = buffer->capacity;
+        buffer_append_data(buffer, tmpbuf, result - writable);
+    }
+    free(tmpbuf);
+    return 0;
 }
