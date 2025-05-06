@@ -50,3 +50,19 @@ int buffer_readable_size(struct Buffer* buffer) {
 int buffer_writable_size(struct Buffer* buffer) {
     return buffer->capacity - buffer->write_pos;
 }
+
+int buffer_append_data(struct Buffer* buffer, const char* data, int size) {
+    if (buffer == NULL || data == NULL || size <= 0) {
+        return -1;
+    }
+    buffer_extend_room(buffer, size);
+    memcpy(buffer->data + buffer->write_pos, data, size);
+    buffer->write_pos += size;
+    return 0;
+}
+
+int buffer_append_string(struct Buffer* buffer, const char* data) {
+    int size = strlen(data);
+    int ret = buffer_append_data(buffer, data, size);
+    return ret;
+}
