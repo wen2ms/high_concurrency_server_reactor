@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "tcp_connection.h"
+
 struct TcpServer* tcp_server_init(unsigned short port, int num_threads) {
     struct TcpServer* tcp = (struct TcpServer*)malloc(sizeof(struct TcpServer));
     tcp->listener = listener_init(port);
@@ -49,6 +51,7 @@ int accept_connection(void* arg) {
     struct TcpServer* server =(struct TcpServer*)arg;
     int cfd = accept(server->listener->lfd, NULL, NULL);
     struct EventLoop* ev_loop = take_worker_event_loop(server->thread_pool);
+    tcp_connection_init(cfd, ev_loop);
 }
 
 void tcp_server_run(struct TcpServer* server) {
