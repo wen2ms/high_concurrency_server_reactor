@@ -44,3 +44,16 @@ struct Listener* listener_init(unsigned short port) {
     listener->port = port;
     return listener;
 }
+
+int accept_connection(void* arg) {
+    struct TcpServer* server =(struct TcpServer*)arg;
+    int cfd = accept(server->listener->lfd, NULL, NULL);
+    struct EventLoop* ev_loop = take_worker_event_loop(server->thread_pool);
+}
+
+void tcp_server_run(struct TcpServer* server) {
+    thread_pool_run(server->thread_pool);
+    struct Channel* channel = channel_init(server->listener->lfd, kReadEvent, accept_connection, NULL, server);
+    event_loop_add_task(server->main_loop, channel, kAdd);
+    event_loop_run(server->main_loop);
+}

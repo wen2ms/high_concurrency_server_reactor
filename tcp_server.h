@@ -17,3 +17,4 @@ struct TcpServer {
 
 struct TcpServer* tcp_server_init(unsigned short port, int num_threads);
 struct Listener* listener_init(unsigned short port);
+void tcp_server_run(struct TcpServer* server);
