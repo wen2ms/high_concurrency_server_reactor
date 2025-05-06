@@ -9,3 +9,6 @@ struct Buffer {
 
 struct Buffer* buffer_init(int size);
 void buffer_destroy(struct Buffer* buf);
+void buffer_extend_room(struct Buffer* buffer, int size);
+int buffer_readable_size(struct Buffer* buffer);
+int buffer_writable_size(struct Buffer* buffer);
