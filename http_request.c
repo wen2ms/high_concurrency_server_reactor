@@ -1,5 +1,6 @@
 #include "http_request.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -45,6 +46,7 @@ void http_request_destroy(struct HttpRequest* req) {
 enum HttpRequestState http_request_state(struct HttpRequest* request) {
     return request->cur_state;
 }
+
 void http_request_add_header(struct HttpRequest* request, const char* key, const char* value) {
     request->req_headers[request->num_req_headers].key = key;
     request->req_headers[request->num_req_headers].value = value;
@@ -60,4 +62,40 @@ char* http_request_get_header(struct HttpRequest* request, const char* key) {
         }
     }
     return NULL;
+}
+
+bool parse_http_request_line(struct HttpRequest* request, struct Buffer* read_buf) {
+    char* end = buffer_find_crlf(read_buf);
+    char* start = read_buf->data + read_buf->read_pos;
+    int line_size = end - start;
+
+    if (line_size) {
+        char* space = memmem(start, line_size, " ", 1);
+        assert(space != NULL);
+        int method_size = space - start;
+        request->method = (char*)malloc(method_size + 1);
+        strncpy(request->method, start, method_size);
+        request->method[method_size] = '\0';
+    
+        start = space + 1;
+        space = memmem(start, line_size, " ", 1);
+        assert(space != NULL);
+        int url_size = space - start;
+        request->url = (char*)malloc(url_size + 1);
+        strncpy(request->url, start, url_size);
+        request->url[url_size] = '\0';
+
+        start = space + 1;
+        int version_size = end - start;
+        request->version = (char*)malloc(version_size + 1);
+        strncpy(request->version, start, version_size);
+        request->url[version_size] = '\0';
+
+        read_buf->read_pos += line_size;
+        read_buf->read_pos += 2;
+        request->cur_state = kParseReqHeaders;
+        return true;
+    }
+
+    return false;
 }
