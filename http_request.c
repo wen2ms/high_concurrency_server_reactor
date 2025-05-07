@@ -64,32 +64,29 @@ char* http_request_get_header(struct HttpRequest* request, const char* key) {
     return NULL;
 }
 
+char* split_request_line(const char* start, const char* end, const char* sub, char** ptr) {
+    char* space = end;
+    if (sub != NULL) {
+        space = memmem(start, end - start, sub, strlen(sub));
+        assert(space != NULL);
+    }
+    int length = space - start;
+    char* tmp = (char*)malloc(length + 1);
+    strncpy(tmp, start, length);
+    tmp[length] = '\0';
+    *ptr = tmp;
+    return space + 1;
+}
+
 bool parse_http_request_line(struct HttpRequest* request, struct Buffer* read_buf) {
     char* end = buffer_find_crlf(read_buf);
     char* start = read_buf->data + read_buf->read_pos;
     int line_size = end - start;
 
     if (line_size) {
-        char* space = memmem(start, line_size, " ", 1);
-        assert(space != NULL);
-        int method_size = space - start;
-        request->method = (char*)malloc(method_size + 1);
-        strncpy(request->method, start, method_size);
-        request->method[method_size] = '\0';
-    
-        start = space + 1;
-        space = memmem(start, line_size, " ", 1);
-        assert(space != NULL);
-        int url_size = space - start;
-        request->url = (char*)malloc(url_size + 1);
-        strncpy(request->url, start, url_size);
-        request->url[url_size] = '\0';
-
-        start = space + 1;
-        int version_size = end - start;
-        request->version = (char*)malloc(version_size + 1);
-        strncpy(request->version, start, version_size);
-        request->url[version_size] = '\0';
+        start = split_request_line(start, end, " ", request->method);
+        start = split_request_line(start, end, " ", request->url);
+        split_request_line(start, end, NULL, request->version);
 
         read_buf->read_pos += line_size;
         read_buf->read_pos += 2;
