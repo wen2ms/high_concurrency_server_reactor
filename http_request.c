@@ -125,3 +125,30 @@ bool parse_http_request_header(struct HttpRequest* request, struct Buffer* read_
     }
     return false;
 }
+
+bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf) {
+    bool flag = true;
+    while (request->cur_state != kParseReqDone) {
+        switch (request->cur_state) {
+            case kParseReqLine:
+                flag = parse_http_request_line(request, read_buf);
+                break;
+            case kParseReqHeaders:
+                flag = parse_http_request_header(request, read_buf);
+                break;
+            case kParseReqBody:
+                break;
+            default:
+                break;
+        }
+
+        if (!flag) {
+            return flag;
+        }
+        if (request->cur_state == kParseReqDone) {
+            
+        }
+    }
+    request->cur_state = kParseReqLine;
+    return flag;
+}
