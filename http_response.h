@@ -24,3 +24,5 @@ struct HttpResponse {
 };
 
 struct HttpResponse* http_response_init();
+void http_response_destroy(struct HttpResponse* response);
+void http_response_add_header(struct HttpResponse* response, const char* key, const char* value);
