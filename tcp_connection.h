@@ -6,6 +6,8 @@
 #include "http_request.h"
 #include "http_response.h"
 
+#define MSG_SEND_AUTO
+
 struct TcpConnection {
     struct EventLoop* ev_loop;
     struct Channel* channel;

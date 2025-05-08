@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/stat.h>
 #include <sys/sendfile.h>
+#include <sys/stat.h>
 
 #define HEADER_SIZE 12
 
@@ -289,12 +289,18 @@ void send_dir(const char* dir_name, struct Buffer* send_buf, int cfd) {
         }
     
         buffer_append_string(send_buf, buf);
+#ifndef MSG_SEND_AUTO
+        buffer_send_data(send_buf, cfd);
+#endif
         memset(buf, 0, sizeof(buf));
         free(namelist[i]);
     }
 
     sprintf(buf, "</table></body></html>");
     buffer_append_string(send_buf, buf);
+#ifndef MSG_SEND_AUTO
+    buffer_send_data(send_buf, cfd);
+#endif
     free(namelist);
 
     return 0;
@@ -309,6 +315,9 @@ void send_file(const char* file_name, struct Buffer* send_buf, int cfd) {
         int len = read(fd, buf, sizeof(buf));
         if (len > 0) {
             buffer_append_data(send_buf, buf, len);
+#ifndef MSG_SEND_AUTO
+            buffer_send_data(send_buf, cfd);
+#endif
             usleep(10);
         } else if (len == 0) {
             break;

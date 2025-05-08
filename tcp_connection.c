@@ -8,15 +8,19 @@ int process_read(void* arg) {
     int count = buffer_socket_read(conn->read_buf, conn->channel->fd);
     if (count > 0) {
         int socket = conn->channel->fd;
+#ifdef MSG_SEND_AUTO
         write_event_enable(conn->channel, true);
         event_loop_add_task(conn->ev_loop, conn->channel, kModify);
+#endif
         bool flag = parse_http_request(conn->request, conn->read_buf, conn->response, conn->write_buf, socket);
         if (!flag) {
             char* err_msg = "HTTP/1.1 400 Bad Request\r\n\r\n";
             buffer_append_string(conn->write_buf, err_msg);
         }
-    } 
+    }
+#ifndef MSG_SEND_AUTO
     event_loop_add_task(conn->ev_loop, conn->channel, kDelete);
+#endif
 }
 
 int process_write(void* arg) {

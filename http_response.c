@@ -47,6 +47,9 @@ void http_response_prepare_msg(struct HttpResponse* response, struct Buffer* sen
         buffer_append_string(send_buf, tmp);
     }
     buffer_append_string(send_buf, "\r\n");
+#ifndef MSG_SEND_AUTO
+    buffer_send_data(send_buf, socket);
+#endif
 
     response->send_data_func(response->file_name, send_buf, socket);
 }
