@@ -270,9 +270,9 @@ const char* get_content_type(const char* file_name) {
     }
 }
 
-int send_dir(const char* dir_name, int cfd) {
-    char buff[4096] = {0};
-    sprintf(buff, "<html><head><title>%s</title></head><body><table>", dir_name);
+void send_dir(const char* dir_name, struct Buffer* send_buf, int cfd) {
+    char buf[4096] = {0};
+    sprintf(buf, "<html><head><title>%s</title></head><body><table>", dir_name);
 
     struct dirent** namelist;
     int num = scandir(dir_name, &namelist, NULL, alphasort);
@@ -283,37 +283,37 @@ int send_dir(const char* dir_name, int cfd) {
         sprintf(sub_path, "%s/%s", dir_name, name);
         stat(sub_path, &st);
         if (S_ISDIR(st.st_mode)) {
-            sprintf(buff + strlen(buff), "<tr><td><a href=\"%s/\">%s</a></td><td>%ld</td></tr>", name, name, st.st_size);
+            sprintf(buf + strlen(buf), "<tr><td><a href=\"%s/\">%s</a></td><td>%ld</td></tr>", name, name, st.st_size);
         } else {
-            sprintf(buff + strlen(buff), "<tr><td><a href=\"%s\">%s</a></td><td>%ld</td></tr>", name, name, st.st_size);
+            sprintf(buf + strlen(buf), "<tr><td><a href=\"%s\">%s</a></td><td>%ld</td></tr>", name, name, st.st_size);
         }
-        
-        send(cfd, buff, strlen(buff), 0);
-        memset(buff, 0, sizeof(buff));
+    
+        buffer_append_string(send_buf, buf);
+        memset(buf, 0, sizeof(buf));
         free(namelist[i]);
     }
 
-    sprintf(buff, "</table></body></html>");
-    send(cfd, buff, strlen(buff), 0);
+    sprintf(buf, "</table></body></html>");
+    buffer_append_string(send_buf, buf);
     free(namelist);
 
     return 0;
 }
 
-int send_file(const char* file_name, int cfd) {
+void send_file(const char* file_name, struct Buffer* send_buf, int cfd) {
     int fd = open(file_name, O_RDONLY);
     assert(fd > 0);
 
-    int size = lseek(fd, 0, SEEK_END);
-    lseek(fd, 0, SEEK_SET);
-    off_t offset = 0;
-    while (offset < size) {
-        int ret = sendfile(cfd, fd, &offset, size - offset);
-        printf("ret value: %d\n", ret);
-        if (ret == - 1 && errno == EAGAIN) {
-            printf("no data...\n");
-        } else if (ret == -1) {
-            perror("sendfile");
+    while (1) {
+        char buf[1024];
+        int len = read(fd, buf, sizeof(buf));
+        if (len > 0) {
+            buffer_append_data(send_buf, buf, len);
+            usleep(10);
+        } else if (len == 0) {
+            break;
+        } else {
+            perror("read");
         }
     }
     close(fd);
