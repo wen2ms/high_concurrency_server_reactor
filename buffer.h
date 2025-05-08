@@ -16,3 +16,4 @@ int buffer_append_data(struct Buffer* buffer, const char* data, int size);
 int buffer_append_string(struct Buffer* buffer, const char* data);
 int buffer_socket_read(struct Buffer* buffer, int fd);
 char* buffer_find_crlf(struct Buffer* buffer);
+int buffer_send_data(struct Buffer* buffer, int socket);

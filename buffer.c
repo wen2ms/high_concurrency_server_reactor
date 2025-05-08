@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/uio.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 struct Buffer* buffer_init(int size) {
     struct Buffer* buffer = (struct Buffer*)malloc(sizeof(struct Buffer));
@@ -92,4 +94,17 @@ int buffer_socket_read(struct Buffer* buffer, int fd) {
 char* buffer_find_crlf(struct Buffer* buffer) {
     char* ptr = memmem(buffer->data + buffer->read_pos, buffer_readable_size(buffer), "\r\n", 2);
     return ptr;
+}
+
+int buffer_send_data(struct Buffer* buffer, int socket) {
+    int readable = buffer_readable_size(buffer);
+    if (readable > 0) {
+        int count = send(socket, buffer->data + buffer->read_pos, readable, 0);
+        if (count > 0) {
+            buffer->read_pos += count;
+            usleep(1);
+        }
+        return count;
+    }
+    return 0;
 }
