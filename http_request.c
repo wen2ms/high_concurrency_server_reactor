@@ -2,10 +2,15 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>
 
 #define HEADER_SIZE 12
 
@@ -149,7 +154,7 @@ bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf, st
             return flag;
         }
         if (request->cur_state == kParseReqDone) {
-            process_http_request(request);
+            process_http_request(request, response);
 
             http_response_prepare_msg(response, send_buf, socket);
         }
@@ -158,7 +163,7 @@ bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf, st
     return flag;
 }
 
-bool process_http_request(struct HttpRequest* request) {
+bool process_http_request(struct HttpRequest* request, struct HttpResponse* response) {
     if (strcasecmp(request->method, "get") != 0) {
         return false;
     }
@@ -175,17 +180,26 @@ bool process_http_request(struct HttpRequest* request) {
     struct stat st;
     int ret = stat(file, &st);
     if (ret == -1) {
-        // send_head_msg(cfd, 404, "Not Found", get_content_type(".html"), -1);
-        // send_file("404.html", cfd);
-        return -1;
+        strcpy(response->file_name, "404.html");
+        response->status_code = kNotFound;
+        strcpy(response->status_msg, "Not Found");
+        http_response_add_header(response, "Content-type", get_content_type(".html"));
+        response->send_data_func = send_file;
+        return true;
     }
 
+    strcpy(response->file_name, file);
+    response->status_code = kOK;
+    strcpy(response->status_msg, "OK");
     if (S_ISDIR(st.st_mode)) {
-        // send_head_msg(cfd, 200, "OK", get_content_type(".html"), -1);
-        // send_dir(file, cfd);
+        http_response_add_header(response, "Content-type", get_content_type(".html"));
+        response->send_data_func = send_dir;
     } else {
-        // send_head_msg(cfd, 200, "OK", get_content_type(file), st.st_size);
-        // send_file(file, cfd);
+        char tmp[12] = {0};
+        sprintf(tmp, "%ld", st.st_size);
+        http_request_add_header(response, "Content-type", get_content_type(file));
+        http_request_add_header(response, "Content-length", tmp);
+        response->send_data_func = send_file;
     }
 
     return true;
@@ -214,5 +228,94 @@ int hex_to_dec(char c) {
         return c - 'A' + 10;
     }
 
+    return 0;
+}
+
+const char* get_content_type(const char* file_name) {
+    const char* dot = strrchr(file_name, '.');
+    if (dot == NULL) {
+        return "text/plain; charset=utf-8";
+    } else if (strcasecmp(dot, ".html") == 0 || strcasecmp(dot, ".htm") == 0) {
+        return "text/html; charset=utf-8";
+    } else if (strcasecmp(dot, ".jpg") == 0 || strcasecmp(dot, ".jpeg") == 0) {
+        return "image/jpeg";
+    } else if (strcasecmp(dot, ".gif") == 0) {
+        return "image/gif";
+    } else if (strcasecmp(dot, ".png") == 0) {
+        return "image/png";
+    } else if (strcasecmp(dot, ".css") == 0) {
+        return "text/css";
+    } else if (strcasecmp(dot, ".au") == 0) {
+        return "audio/basic";
+    } else if (strcasecmp(dot, ".wav") == 0) {
+        return "audio/wav";
+    } else if (strcasecmp(dot, ".avi") == 0) {
+        return "video/x-msvideo";
+    } else if (strcasecmp(dot, ".midi") == 0 || strcasecmp(dot, ".mid") == 0) {
+        return "audio/midi";
+    } else if (strcasecmp(dot, ".mp3") == 0) {
+        return "audio/mpeg";
+    } else if (strcasecmp(dot, ".mov") == 0 || strcasecmp(dot, ".qt") == 0) {
+        return "video/quicktime";
+    } else if (strcasecmp(dot, ".mpeg") == 0 || strcasecmp(dot, ".mpe") == 0) {
+        return "video/mpeg";
+    } else if (strcasecmp(dot, ".vrml") == 0 || strcasecmp(dot, ".vrl") == 0) {
+        return "model/vrml";
+    } else if (strcasecmp(dot, ".ogg") == 0) {
+        return "application/ogg";
+    } else if (strcasecmp(dot, ".pac") == 0) {
+        return "application/x-ns-proxy-autoconfig";
+    } else {
+        return "text/plain; charset=utf-8";
+    }
+}
+
+int send_dir(const char* dir_name, int cfd) {
+    char buff[4096] = {0};
+    sprintf(buff, "<html><head><title>%s</title></head><body><table>", dir_name);
+
+    struct dirent** namelist;
+    int num = scandir(dir_name, &namelist, NULL, alphasort);
+    for (int i = 0; i < num; ++i) {
+        char* name = namelist[i]->d_name;
+        struct stat st;
+        char sub_path[1024] = {0};
+        sprintf(sub_path, "%s/%s", dir_name, name);
+        stat(sub_path, &st);
+        if (S_ISDIR(st.st_mode)) {
+            sprintf(buff + strlen(buff), "<tr><td><a href=\"%s/\">%s</a></td><td>%ld</td></tr>", name, name, st.st_size);
+        } else {
+            sprintf(buff + strlen(buff), "<tr><td><a href=\"%s\">%s</a></td><td>%ld</td></tr>", name, name, st.st_size);
+        }
+        
+        send(cfd, buff, strlen(buff), 0);
+        memset(buff, 0, sizeof(buff));
+        free(namelist[i]);
+    }
+
+    sprintf(buff, "</table></body></html>");
+    send(cfd, buff, strlen(buff), 0);
+    free(namelist);
+
+    return 0;
+}
+
+int send_file(const char* file_name, int cfd) {
+    int fd = open(file_name, O_RDONLY);
+    assert(fd > 0);
+
+    int size = lseek(fd, 0, SEEK_END);
+    lseek(fd, 0, SEEK_SET);
+    off_t offset = 0;
+    while (offset < size) {
+        int ret = sendfile(cfd, fd, &offset, size - offset);
+        printf("ret value: %d\n", ret);
+        if (ret == - 1 && errno == EAGAIN) {
+            printf("no data...\n");
+        } else if (ret == -1) {
+            perror("sendfile");
+        }
+    }
+    close(fd);
     return 0;
 }

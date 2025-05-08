@@ -37,5 +37,6 @@ bool parse_http_request_line(struct HttpRequest* request, struct Buffer* read_bu
 bool parse_http_request_header(struct HttpRequest* request, struct Buffer* read_buf);
 bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf, struct HttpResponse* response,
                         struct Buffer* send_buf, int socket);
-bool process_http_request(struct HttpRequest* request);
+bool process_http_request(struct HttpRequest* request, struct HttpResponse* response);
 void decode_msg(char* to, char* from);
+const char* get_content_type(const char* file_name);

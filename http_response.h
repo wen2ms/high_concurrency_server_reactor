@@ -4,6 +4,7 @@
 
 enum HttpStatusCode {
     kUnknown,
+    kOK = 200,
     kMovedPermanently = 301,
     kMovedTemporarily = 302,
     kBadRequest = 400,
