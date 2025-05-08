@@ -67,6 +67,7 @@ static int poll_remove(struct Channel* channel, struct EventLoop* ev_loop) {
             break; 
         }
     }
+    channel->destroy_callback(channel->arg);
     if (i >= MAX) {
         return -1;
     }

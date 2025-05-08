@@ -64,6 +64,7 @@ static int epoll_remove(struct Channel* channel, struct EventLoop* ev_loop) {
         perror("epoll_remove");
         exit(0);
     }
+    channel->destroy_callback(channel->arg);
     return ret;
 }
 

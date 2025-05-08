@@ -43,7 +43,23 @@ struct TcpConnection* tcp_connection_init(int fd, struct EventLoop* ev_loop) {
     conn->request = http_request_init();
     conn->response = http_response_init();
     sprintf(conn->name, "connection_%d", fd);
-    conn->channel = channel_init(fd, kReadEvent, process_read, process_write, conn);
+    conn->channel = channel_init(fd, kReadEvent, process_read, process_write, tcp_connection_destroy, conn);
     event_loop_add_task(ev_loop, conn->channel, kAdd);
     return conn;
+}
+
+int tcp_connection_destroy(void* arg) {
+    struct TcpConnection* conn = (struct TcpConnection*)arg;
+    if (conn != NULL) {
+        if (conn->read_buf && buffer_readable_size(conn->read_buf) == 0 && conn->write_buf &&
+            buffer_readable_size(conn->write_buf) == 0) {
+            destroy_channel(conn->ev_loop, conn->channel);
+            buffer_destroy(conn->read_buf);
+            buffer_destroy(conn->write_buf);
+            http_request_destroy(conn->request);
+            http_response_destroy(conn->response);
+            free(conn);
+        }
+    }
+    return 0;
 }

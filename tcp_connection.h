@@ -19,3 +19,4 @@ struct TcpConnection {
 };
 
 struct TcpConnection* tcp_connection_init(int fd, struct EventLoop* ev_loop);
+int tcp_connection_destroy(void* arg);

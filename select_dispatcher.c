@@ -61,7 +61,7 @@ static int select_add(struct Channel* channel, struct EventLoop* ev_loop) {
 static int select_remove(struct Channel* channel, struct EventLoop* ev_loop) {
     struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
     clear_fd_set(channel, data);
-
+    channel->destroy_callback(channel->arg);
     return 0;
 }
 
