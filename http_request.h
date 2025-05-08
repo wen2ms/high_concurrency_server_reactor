@@ -35,3 +35,5 @@ char* http_request_get_header(struct HttpRequest* request, const char* key);
 bool parse_http_request_line(struct HttpRequest* request, struct Buffer* read_buf);
 bool parse_http_request_header(struct HttpRequest* request, struct Buffer* read_buf);
 bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf);
+bool process_http_request(struct HttpRequest* request);
+void decode_msg(char* to, char* from);

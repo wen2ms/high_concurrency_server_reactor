@@ -1,9 +1,11 @@
 #include "http_request.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/stat.h>
 
 #define HEADER_SIZE 12
 
@@ -146,9 +148,68 @@ bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf) {
             return flag;
         }
         if (request->cur_state == kParseReqDone) {
-            
+
         }
     }
     request->cur_state = kParseReqLine;
     return flag;
+}
+
+bool process_http_request(struct HttpRequest* request) {
+    if (strcasecmp(request->method, "get") != 0) {
+        return false;
+    }
+
+    decode_msg(request->url, request->url);
+
+    char* file = NULL;
+    if (strcmp(request->url, "/") == 0) {
+        file = "./";
+    } else {
+        file = request->url + 1;
+    }
+
+    struct stat st;
+    int ret = stat(file, &st);
+    if (ret == -1) {
+        // send_head_msg(cfd, 404, "Not Found", get_content_type(".html"), -1);
+        // send_file("404.html", cfd);
+        return -1;
+    }
+
+    if (S_ISDIR(st.st_mode)) {
+        // send_head_msg(cfd, 200, "OK", get_content_type(".html"), -1);
+        // send_dir(file, cfd);
+    } else {
+        // send_head_msg(cfd, 200, "OK", get_content_type(file), st.st_size);
+        // send_file(file, cfd);
+    }
+
+    return true;
+}
+
+void decode_msg(char* to, char* from) {
+    for (; *from != '\0'; ++from, ++to) {
+        if (from[0] == '%' && isxdigit(from[1]) && isxdigit(from[2])) {
+            *to = hex_to_dec(from[1]) * 16 + hex_to_dec(from[2]);
+            from += 2;
+        } else {
+            *to = *from;
+        }
+    }
+    *to = '\0';
+}
+
+int hex_to_dec(char c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+    if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+
+    return 0;
 }
