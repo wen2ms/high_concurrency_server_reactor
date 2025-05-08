@@ -33,3 +33,4 @@ enum HttpRequestState http_request_state(struct HttpRequest* request);
 void http_request_add_header(struct HttpRequest* request, const char* key, const char* value);
 char* http_request_get_header(struct HttpRequest* request, const char* key);
 bool parse_http_request_line(struct HttpRequest* request, struct Buffer* read_buf);
+bool parse_http_request_header(struct HttpRequest* request, struct Buffer* read_buf);

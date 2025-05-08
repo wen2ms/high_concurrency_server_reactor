@@ -96,3 +96,32 @@ bool parse_http_request_line(struct HttpRequest* request, struct Buffer* read_bu
 
     return false;
 }
+
+bool parse_http_request_header(struct HttpRequest* request, struct Buffer* read_buf) {
+    char* end = buffer_find_crlf(read_buf);
+    if (end != NULL) {
+        char* start = read_buf->data + read_buf->read_pos;
+        int line_size = end - start;
+        char* middle = memmem(start, line_size, ": ", 2);
+        if (middle != NULL) {
+            int key_length = middle - start;
+            char* key = (char*)malloc(key_length + 1);
+            strncpy(key, start, key_length);
+            key[key_length] = '\0';
+
+            int value_length = end - middle - 2;
+            char* value = (char*)malloc(value_length + 1);
+            strncpy(value, middle + 2, value_length);
+            value[value_length] = '\0';
+
+            http_request_add_header(request, key, value);
+            read_buf->read_pos += line_size;
+            read_buf->read_pos += 2;
+        } else {
+            read_buf->read_pos += 2;
+            request->cur_state = kParseReqDone;
+        }
+        return true;
+    }
+    return false;
+}
