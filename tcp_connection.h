@@ -3,6 +3,8 @@
 #include "event_loop.h"
 #include "buffer.h"
 #include "channel.h"
+#include "http_request.h"
+#include "http_response.h"
 
 struct TcpConnection {
     struct EventLoop* ev_loop;
@@ -10,6 +12,8 @@ struct TcpConnection {
     struct Buffer* read_buf;
     struct Buffer* write_buf;
     char name[12];
+    struct HttpRequest* request;
+    struct HttpResponse* response;
 };
 
 struct TcpConnection* tcp_connection_init(int fd, struct EventLoop* ev_loop);

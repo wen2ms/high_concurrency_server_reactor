@@ -7,10 +7,14 @@ int process_read(void* arg) {
     struct TcpConnection* conn = (struct TcpConnection*)arg;
     int count = buffer_socket_read(conn->read_buf, conn->channel->fd);
     if (count > 0) {
-
-    } else {
-
-    }
+        int socket = conn->channel->fd;
+        bool flag = parse_http_request(conn->request, conn->read_buf, conn->response, conn->write_buf, socket);
+        if (!flag) {
+            char* err_msg = "HTTP/1.1 400 Bad Request\r\n\r\n";
+            buffer_append_string(conn->write_buf, err_msg);
+        }
+    } 
+    event_loop_add_task(conn->ev_loop, conn->channel, kDelete);
 }
 
 struct TcpConnection* tcp_connection_init(int fd, struct EventLoop* ev_loop) {
@@ -18,6 +22,8 @@ struct TcpConnection* tcp_connection_init(int fd, struct EventLoop* ev_loop) {
     conn->ev_loop = ev_loop;
     conn->read_buf = buffer_init(10240);
     conn->write_buf = buffer_init(10240);
+    conn->request = http_request_init();
+    conn->response = http_response_init();
     sprintf(conn->name, "connection_%d", fd);
     conn->channel = channel_init(fd, kReadEvent, process_read, NULL, conn);
     event_loop_add_task(ev_loop, conn->channel, kAdd);
