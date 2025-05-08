@@ -128,7 +128,8 @@ bool parse_http_request_header(struct HttpRequest* request, struct Buffer* read_
     return false;
 }
 
-bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf) {
+bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf, struct HttpResponse* response,
+                        struct Buffer* send_buf, int socket) {
     bool flag = true;
     while (request->cur_state != kParseReqDone) {
         switch (request->cur_state) {
@@ -148,7 +149,9 @@ bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf) {
             return flag;
         }
         if (request->cur_state == kParseReqDone) {
+            process_http_request(request);
 
+            http_response_prepare_msg(response, send_buf, socket);
         }
     }
     request->cur_state = kParseReqLine;

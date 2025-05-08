@@ -1,5 +1,6 @@
 #include "http_response.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -14,6 +15,7 @@ struct HttpResponse* http_response_init() {
     response->status_code = kUnknown;
     bzero(response->headers, size);
     bzero(response->status_msg, sizeof(response->status_msg));
+    bzero(response->file_name, sizeof(response->file_name));
 
     response->send_data_func = NULL;
 
@@ -34,4 +36,17 @@ void http_response_add_header(struct HttpResponse* response, const char* key, co
     strcpy(response->headers[response->num_headers].key, key);
     strcpy(response->headers[response->num_headers].value, value);
     response->num_headers++;
+}
+
+void http_response_prepare_msg(struct HttpResponse* response, struct Buffer* send_buf, int socket) {
+    char tmp[1024] = {0};
+    sprintf(tmp, "HTTP/1.1 %d %s\r\n", response->status_code, response->status_msg);
+    buffer_append_string(send_buf, tmp);
+    for (int i = 0; i < response->num_headers; ++i) {
+        sprintf(tmp, "%s: %s\r\n", response->headers[i].key, response->headers[i].value);
+        buffer_append_string(send_buf, tmp);
+    }
+    buffer_append_string(send_buf, "\r\n");
+
+    response->send_data_func(response->file_name, send_buf, socket);
 }
