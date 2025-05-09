@@ -11,6 +11,7 @@
 #include <strings.h>
 #include <sys/sendfile.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #define HEADER_SIZE 12
 
@@ -55,8 +56,8 @@ enum HttpRequestState http_request_state(struct HttpRequest* request) {
 }
 
 void http_request_add_header(struct HttpRequest* request, const char* key, const char* value) {
-    request->req_headers[request->num_req_headers].key = key;
-    request->req_headers[request->num_req_headers].value = value;
+    request->req_headers[request->num_req_headers].key = (char*)key;
+    request->req_headers[request->num_req_headers].value = (char*)value;
     request->num_req_headers++;
 }
 
@@ -91,9 +92,9 @@ bool parse_http_request_line(struct HttpRequest* request, struct Buffer* read_bu
     int line_size = end - start;
 
     if (line_size) {
-        start = split_request_line(start, end, " ", request->method);
-        start = split_request_line(start, end, " ", request->url);
-        split_request_line(start, end, NULL, request->version);
+        start = split_request_line(start, end, " ", &request->method);
+        start = split_request_line(start, end, " ", &request->url);
+        split_request_line(start, end, NULL, &request->version);
 
         read_buf->read_pos += line_size;
         read_buf->read_pos += 2;
@@ -197,8 +198,8 @@ bool process_http_request(struct HttpRequest* request, struct HttpResponse* resp
     } else {
         char tmp[12] = {0};
         sprintf(tmp, "%ld", st.st_size);
-        http_request_add_header(response, "Content-type", get_content_type(file));
-        http_request_add_header(response, "Content-length", tmp);
+        http_response_add_header(response, "Content-type", get_content_type(file));
+        http_response_add_header(response, "Content-length", tmp);
         response->send_data_func = send_file;
     }
 
@@ -302,8 +303,6 @@ void send_dir(const char* dir_name, struct Buffer* send_buf, int cfd) {
     buffer_send_data(send_buf, cfd);
 #endif
     free(namelist);
-
-    return 0;
 }
 
 void send_file(const char* file_name, struct Buffer* send_buf, int cfd) {
@@ -326,5 +325,4 @@ void send_file(const char* file_name, struct Buffer* send_buf, int cfd) {
         }
     }
     close(fd);
-    return 0;
 }

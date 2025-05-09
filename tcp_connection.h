@@ -13,7 +13,7 @@ struct TcpConnection {
     struct Channel* channel;
     struct Buffer* read_buf;
     struct Buffer* write_buf;
-    char name[12];
+    char name[32];
     struct HttpRequest* request;
     struct HttpResponse* response;
 };

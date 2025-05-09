@@ -75,7 +75,7 @@ int buffer_socket_read(struct Buffer* buffer, int fd) {
     int writable = buffer_writable_size(buffer);
     vec[0].iov_base = buffer->data + buffer->write_pos;
     vec[0].iov_len = writable;
-    char tmpbuf = (char*)malloc(40960);
+    char* tmpbuf = (char*)malloc(40960);
     vec[1].iov_base = tmpbuf;
     vec[1].iov_len = 40960;
     int result = readv(fd, vec, 2);

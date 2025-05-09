@@ -1,6 +1,7 @@
 #include <sys/epoll.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "dispatcher.h"
 
@@ -103,4 +104,5 @@ static int epoll_clear(struct EventLoop* ev_loop) {
     free(data->events);
     close(data->epfd);
     free(data);
+    return 0;
 }

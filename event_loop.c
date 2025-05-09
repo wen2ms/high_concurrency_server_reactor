@@ -12,7 +12,7 @@ struct EventLoop* event_loop_init() {
 }
 
 void task_wakeup(struct EventLoop* ev_loop) {
-    const char msg = "Wake Up!!!";
+    const char* msg = "Wake Up!!!";
     write(ev_loop->socket_pair[0], msg, strlen(msg));
 }
 
@@ -38,7 +38,7 @@ struct EventLoop* event_loop_init_ex(const char* thread_name) {
         perror("socketpair");
         exit(0);
     }
-    struct Channel* channel = channel_init(ev_loop->socket_pair[1], kReadEvent, read_local_message, NULL, ev_loop);
+    struct Channel* channel = channel_init(ev_loop->socket_pair[1], kReadEvent, read_local_message, NULL, NULL, ev_loop);
     event_loop_add_task(ev_loop, channel, kAdd);
 
     return ev_loop;

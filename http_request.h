@@ -39,4 +39,7 @@ bool parse_http_request(struct HttpRequest* request, struct Buffer* read_buf, st
                         struct Buffer* send_buf, int socket);
 bool process_http_request(struct HttpRequest* request, struct HttpResponse* response);
 void decode_msg(char* to, char* from);
+int hex_to_dec(char c);
 const char* get_content_type(const char* file_name);
+void send_dir(const char* dir_name, struct Buffer* send_buf, int cfd);
+void send_file(const char* file_name, struct Buffer* send_buf, int cfd);

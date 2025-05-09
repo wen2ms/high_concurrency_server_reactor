@@ -50,7 +50,7 @@ static void clear_fd_set(struct Channel* channel, struct SelectData* data) {
 
 static int select_add(struct Channel* channel, struct EventLoop* ev_loop) {
     struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
-    if (channel >= MAX) {
+    if (channel->fd >= MAX) {
         return -1;
     }
     set_fd_set(channel, data);
