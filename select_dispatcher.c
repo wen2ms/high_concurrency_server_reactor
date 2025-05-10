@@ -101,4 +101,5 @@ static int select_dispatch(struct EventLoop* ev_loop, int timeout) {
 static int select_clear(struct EventLoop* ev_loop) {
     struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
     free(data);
+    return 0;
 }

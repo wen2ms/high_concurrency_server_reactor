@@ -57,9 +57,9 @@ int accept_connection(void* arg) {
 }
 
 void tcp_server_run(struct TcpServer* server) {
+    DEBUG("Server started...");
     thread_pool_run(server->thread_pool);
     struct Channel* channel = channel_init(server->listener->lfd, kReadEvent, accept_connection, NULL, NULL, server);
     event_loop_add_task(server->main_loop, channel, kAdd);
     event_loop_run(server->main_loop);
-    DEBUG("Server started...");
 }
