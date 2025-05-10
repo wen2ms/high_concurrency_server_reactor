@@ -3,6 +3,7 @@
 #include "channel.h"
 #include "event_loop.h"
 
+struct EventLoop;
 struct Dispatcher {
     void* (*init)();
     int (*add)(struct Channel* channel, struct EventLoop* ev_loop);

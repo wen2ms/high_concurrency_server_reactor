@@ -73,7 +73,7 @@ char* http_request_get_header(struct HttpRequest* request, const char* key) {
 }
 
 char* split_request_line(const char* start, const char* end, const char* sub, char** ptr) {
-    char* space = end;
+    char* space = (char*)end;
     if (sub != NULL) {
         space = memmem(start, end - start, sub, strlen(sub));
         assert(space != NULL);
