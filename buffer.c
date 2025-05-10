@@ -88,7 +88,7 @@ int buffer_socket_read(struct Buffer* buffer, int fd) {
         buffer_append_data(buffer, tmpbuf, result - writable);
     }
     free(tmpbuf);
-    return 0;
+    return result;
 }
 
 char* buffer_find_crlf(struct Buffer* buffer) {
@@ -99,7 +99,7 @@ char* buffer_find_crlf(struct Buffer* buffer) {
 int buffer_send_data(struct Buffer* buffer, int socket) {
     int readable = buffer_readable_size(buffer);
     if (readable > 0) {
-        int count = send(socket, buffer->data + buffer->read_pos, readable, 0);
+        int count = send(socket, buffer->data + buffer->read_pos, readable, MSG_NOSIGNAL);
         if (count > 0) {
             buffer->read_pos += count;
             usleep(1);

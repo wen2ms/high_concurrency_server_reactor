@@ -13,7 +13,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define HEADER_SIZE 12
+#include "tcp_connection.h"
+#include "log.h"
+
+#define HEADER_SIZE 24
 
 struct HttpRequest* http_request_init() {
     struct HttpRequest* request = (struct HttpRequest*)malloc(sizeof(struct HttpRequest));
@@ -317,10 +320,10 @@ void send_file(const char* file_name, struct Buffer* send_buf, int cfd) {
 #ifndef MSG_SEND_AUTO
             buffer_send_data(send_buf, cfd);
 #endif
-            usleep(10);
         } else if (len == 0) {
             break;
         } else {
+            close(fd);
             perror("read");
         }
     }

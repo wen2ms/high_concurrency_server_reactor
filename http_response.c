@@ -5,6 +5,9 @@
 #include <string.h>
 #include <strings.h>
 
+#include "tcp_connection.h"
+#include "log.h"
+
 #define RES_HEADER_SIZE 16
 
 struct HttpResponse* http_response_init() {

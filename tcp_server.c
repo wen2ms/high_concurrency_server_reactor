@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "tcp_connection.h"
+#include "log.h"
 
 struct TcpServer* tcp_server_init(unsigned short port, int num_threads) {
     struct TcpServer* tcp = (struct TcpServer*)malloc(sizeof(struct TcpServer));
@@ -52,6 +53,7 @@ int accept_connection(void* arg) {
     int cfd = accept(server->listener->lfd, NULL, NULL);
     struct EventLoop* ev_loop = take_worker_event_loop(server->thread_pool);
     tcp_connection_init(cfd, ev_loop);
+    return 0;
 }
 
 void tcp_server_run(struct TcpServer* server) {
@@ -59,4 +61,5 @@ void tcp_server_run(struct TcpServer* server) {
     struct Channel* channel = channel_init(server->listener->lfd, kReadEvent, accept_connection, NULL, NULL, server);
     event_loop_add_task(server->main_loop, channel, kAdd);
     event_loop_run(server->main_loop);
+    DEBUG("Server started...");
 }

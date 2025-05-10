@@ -28,7 +28,7 @@ void thread_pool_run(struct ThreadPool* pool) {
 }
 
 struct EventLoop* take_worker_event_loop(struct ThreadPool* pool) {
-    assert(pool && !pool->is_start);
+    assert(pool && pool->is_start);
     if (pool->main_loop->thread_id != pthread_self()) {
         exit(0);
     }

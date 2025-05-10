@@ -3,9 +3,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define DEBUG 1
+#define DEBUG_MODE 1
 
-#if DEBUG
+#if DEBUG_MODE
 
 #define LOG(type, fmt, args...) \
     do {\

@@ -7,6 +7,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "log.h"
+
 struct EventLoop* event_loop_init() {
     return event_loop_init_ex(NULL);
 }
@@ -82,7 +84,7 @@ int event_loop_add_task(struct EventLoop* ev_loop, struct Channel* channel, int 
     node->channel = channel;
     node->type = type;
     node->next = NULL;
-    if (ev_loop->head = NULL) {
+    if (ev_loop->head == NULL) {
         ev_loop->head = ev_loop->tail = node;
     } else {
         ev_loop->tail->next = node;
