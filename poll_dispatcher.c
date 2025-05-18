@@ -105,7 +105,7 @@ static int poll_dispatch(struct EventLoop* ev_loop, int timeout) {
         exit(0);
     }
     for (int i = 0; i <= data->maxfd; ++i) {
-        if (data->fds[i].revents == -1) {
+        if (data->fds[i].fd == -1) {
             continue;
         }
         if (data->fds[i].revents & POLLIN) {
