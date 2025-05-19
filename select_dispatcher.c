@@ -67,8 +67,15 @@ static int select_remove(struct Channel* channel, struct EventLoop* ev_loop) {
 
 static int select_modify(struct Channel* channel, struct EventLoop* ev_loop) {
     struct SelectData* data = (struct SelectData*)ev_loop->dispatcher_data;
-    set_fd_set(channel, data);
-    clear_fd_set(channel, data);
+
+    if (channel->events & kReadEvent) {
+        FD_SET(channel->fd, &data->read_set);
+        FD_CLR(channel->fd, &data->write_set);
+    }
+    if (channel->events & kWriteEvent) {
+        FD_SET(channel->fd, &data->write_set);
+        FD_CLR(channel->fd, &data->read_set);
+    }
 
     return 0;
 }
